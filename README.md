@@ -39,5 +39,8 @@ There are example codes in example dir for both ITC and IPC usage.
 
 Use example/multhread.cc for benchmark, on a host with "Intel(R) Xeon(R) Gold 6144 CPU @ 3.50GHz" and cpu isolated and pinned, in one reader scenario, average latency is 335 tsc(95.7 ns), and one additional reader makes the latency 40 tsc(11.4 ns) higher.
 
+## Multiple Producer Version?
+Actually SPMCQueue can be easily altered to supoort multiple producer by replacing `++write_idx` with atomic fetch add. But multiple producer queue is a bad design because producers' contention deteriorates performance(in this case producers contend on write_idx). It's better to use multiple SPMCQueue, each for one producer thread, and have consumers poll on all these queues.
+
 ## An Implementation for Dynamic-Sized Msg
 If you're looking for a SPMC queue which can handle messages with dynamic size(like a real multicasting udp package), check [PubSubQueue](https://github.com/MengRao/PubSubQueue).
