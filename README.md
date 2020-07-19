@@ -24,7 +24,7 @@ For readers, initially one reader needs to get a `Reader` object from the queue:
 The read operation is non-blocking, which means user needs to repetitively call the `read()` function to poll new messages from the writer. `read()` returns `T*` if it succeeds or `nullptr` if no new message:
 ```c++
   int* msg = reader.read();
-  if(msg) {
+  if (msg) {
     std::cout << "msg: "<< *msg << std::endl;
   }
 ```
