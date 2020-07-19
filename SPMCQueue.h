@@ -27,6 +27,7 @@ template<class T, uint32_t CNT>
 class SPMCQueue
 {
 public:
+  using MessageType = T;
   static_assert(CNT && !(CNT & (CNT - 1)), "CNT must be a power of 2");
   struct Reader
   {
