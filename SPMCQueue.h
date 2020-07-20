@@ -23,7 +23,7 @@ SOFTWARE.
 */
 #pragma once
 
-template<class T, uint32_t CNT>
+template<class T, uint32_t CNT, bool ZERO_COPY_READ = false>
 class SPMCQueue
 {
 public:
@@ -35,6 +35,10 @@ public:
       asm volatile("" : "=m"(blk) : :);
       uint64_t new_idx = blk.idx;
       if (new_idx <= idx) return nullptr;
+      if (ZERO_COPY_READ) {
+        idx = new_idx;
+        return &blk.data;
+      }
       data = blk.data;
       asm volatile("" : "=m"(blk) : :);
       if (__builtin_expect(blk.idx != new_idx, 0)) return nullptr; // blk has been updated by writer
@@ -42,7 +46,7 @@ public:
       return &data;
     }
 
-    SPMCQueue<T, CNT>* q;
+    SPMCQueue<T, CNT, ZERO_COPY_READ>* q;
     unsigned long long idx;
     T data;
   };
