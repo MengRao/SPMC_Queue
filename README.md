@@ -29,7 +29,7 @@ The read operation is non-blocking, which means user needs to repetitively call 
   }
 ```
 
-Note that the read operation is not zero-copy: it copys the msg to an internal local buffer for saftey.
+Note that by default the read operation is not zero-copy: it copys the msg to an internal local buffer to prevent data from being overwritten by the writer. If you're confident that you're handling msg very fast and the overwriting problem would never happen, then you can set the 3rd template parameter `ZERO_COPY_READ` to true in order to improve  performance.
 
 ## Examples
 There are example codes in example dir for both ITC and IPC usage.
