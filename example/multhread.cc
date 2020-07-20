@@ -6,7 +6,7 @@ using namespace std;
 struct Msg
 {
   uint64_t tsc;
-  uint64_t i[20];
+  uint64_t i[10];
 };
 
 inline uint64_t rdtsc() {

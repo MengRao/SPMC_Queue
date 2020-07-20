@@ -61,8 +61,10 @@ public:
   template<typename Writer>
   void write(Writer writer) {
     auto& blk = blks[++write_idx % CNT];
-    blk.idx = 0;
-    asm volatile("" : : "m"(blk) :);
+    if (!ZERO_COPY_READ) {
+      blk.idx = 0;
+      asm volatile("" : : "m"(blk) :);
+    }
     writer(blk.data);
     asm volatile("" : : "m"(blk) :);
     blk.idx = write_idx;
