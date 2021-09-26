@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include <cstdint>
 
 template<class T, uint32_t CNT, bool ZERO_COPY_READ = false>
 class SPMCQueue
