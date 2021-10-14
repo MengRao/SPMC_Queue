@@ -22,9 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include <cstdint>
 
-template<class T, uint32_t CNT, bool ZERO_COPY_READ = false>
+template<class T, unsigned int CNT, bool ZERO_COPY_READ = false>
 class SPMCQueue
 {
 public:
@@ -34,8 +33,8 @@ public:
     T* read() {
       auto& blk = q->blks[(idx + 1) % CNT];
       asm volatile("" : "=m"(blk) : :);
-      uint64_t new_idx = blk.idx;
-      if (new_idx <= idx) return nullptr;
+      unsigned int new_idx = blk.idx;
+      if ((int)new_idx - (int)idx <= 0) return nullptr;
       if (ZERO_COPY_READ) {
         idx = new_idx;
         return &blk.data;
@@ -48,7 +47,7 @@ public:
     }
 
     SPMCQueue<T, CNT, ZERO_COPY_READ>* q;
-    unsigned long long idx;
+    unsigned int idx;
     T data;
   };
 
@@ -76,9 +75,9 @@ private:
   friend class Reader;
   struct alignas(64) Block
   {
-    unsigned long long idx = 0;
+    unsigned int idx = 0;
     T data;
   } blks[CNT];
 
-  alignas(128) unsigned long long write_idx = 0;
+  alignas(128) unsigned int write_idx = 0;
 };
