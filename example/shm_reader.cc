@@ -12,6 +12,7 @@ int main(int argc, char** argv) {
   Q* q = shmmap(shm_file);
   if (!q) return 1;
   auto reader = q->getReader();
+  cout << "reader size: " << sizeof(reader) << endl;
 
   while (true) {
     Msg* msg = reader.read();

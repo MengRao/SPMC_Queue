@@ -39,16 +39,16 @@ public:
         idx = new_idx;
         return &blk.data;
       }
-      data = blk.data;
+      data[0] = blk.data;
       asm volatile("" : "=m"(blk) : :);
       if (__builtin_expect(blk.idx != new_idx, 0)) return nullptr; // blk has been updated by writer
       idx = new_idx;
-      return &data;
+      return &data[0];
     }
 
     SPMCQueue<T, CNT, ZERO_COPY_READ>* q;
     unsigned int idx;
-    T data;
+    T data[!ZERO_COPY_READ];
   };
 
   Reader getReader() {
