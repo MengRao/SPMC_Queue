@@ -13,7 +13,7 @@ struct Msg
   uint64_t pad[188];
 };
 
-using Q = SPMCQueue<Msg, 1024, true>;
+using Q = SPMCQueue<Msg, 1024>;
 
 inline uint64_t rdtsc() {
   return __builtin_ia32_rdtsc();

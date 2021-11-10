@@ -23,32 +23,25 @@ SOFTWARE.
 */
 #pragma once
 
-template<class T, unsigned int CNT, bool ZERO_COPY_READ = false>
+template<class T, unsigned int CNT>
 class SPMCQueue
 {
 public:
   static_assert(CNT && !(CNT & (CNT - 1)), "CNT must be a power of 2");
   struct Reader
   {
+    operator bool() const { return q; }
     T* read() {
       auto& blk = q->blks[(idx + 1) % CNT];
       asm volatile("" : "=m"(blk) : :);
       unsigned int new_idx = blk.idx;
       if ((int)new_idx - (int)idx <= 0) return nullptr;
-      if (ZERO_COPY_READ) {
-        idx = new_idx;
-        return &blk.data;
-      }
-      data[0] = blk.data;
-      asm volatile("" : "=m"(blk) : :);
-      if (__builtin_expect(blk.idx != new_idx, 0)) return nullptr; // blk has been updated by writer
       idx = new_idx;
-      return &data[0];
+      return &blk.data;
     }
 
-    SPMCQueue<T, CNT, ZERO_COPY_READ>* q;
+    SPMCQueue<T, CNT>* q;
     unsigned int idx;
-    T data[!ZERO_COPY_READ];
   };
 
   Reader getReader() {
@@ -61,10 +54,6 @@ public:
   template<typename Writer>
   void write(Writer writer) {
     auto& blk = blks[++write_idx % CNT];
-    if (!ZERO_COPY_READ) {
-      blk.idx = 0;
-      asm volatile("" : : "m"(blk) :);
-    }
     writer(blk.data);
     asm volatile("" : : "m"(blk) :);
     blk.idx = write_idx;

@@ -6,7 +6,7 @@ using namespace std;
 struct Msg
 {
   uint64_t tsc;
-  uint64_t i[100];
+  uint64_t i[1];
 };
 
 inline uint64_t rdtsc() {
@@ -27,7 +27,7 @@ bool cpupin(int cpuid) {
 
 const uint64_t MaxI = 1000000;
 
-using Q = SPMCQueue<Msg, 1024, true>;
+using Q = SPMCQueue<Msg, 1024>;
 Q q;
 
 void read_thread(int tid, int cpu) {
