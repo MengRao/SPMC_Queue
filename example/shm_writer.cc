@@ -14,11 +14,13 @@ int main(int argc, char** argv) {
 
   uint64_t i = 0;
   while (true) {
-    q->write([i](Msg& msg) {
-      msg.i = i;
-      msg.tsc = rdtsc();
-    });
-    i++;
+    for (int _ = 0; _ < 3; _++) {
+      q->write([i](Msg& msg) {
+        msg.i = i;
+        msg.tsc = rdtsc();
+      });
+      i++;
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 

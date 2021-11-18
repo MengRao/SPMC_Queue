@@ -40,6 +40,13 @@ public:
       return &blk.data;
     }
 
+    T* readLast() {
+      unsigned int last_idx = *(volatile unsigned int*)&q->write_idx;
+      if ((int)last_idx - (int)idx <= 0) return nullptr;
+      idx = last_idx;
+      return &q->blks[last_idx % CNT].data;
+    }
+
     SPMCQueue<T, CNT>* q;
     unsigned int idx;
   };
@@ -53,10 +60,10 @@ public:
 
   template<typename Writer>
   void write(Writer writer) {
-    auto& blk = blks[++write_idx % CNT];
+    auto& blk = blks[(write_idx + 1) % CNT];
     writer(blk.data);
     asm volatile("" : : "m"(blk) :);
-    blk.idx = write_idx;
+    blk.idx = ++write_idx;
     asm volatile("" : : "m"(write_idx), "m"(blk) :);
   }
 

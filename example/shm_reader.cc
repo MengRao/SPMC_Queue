@@ -15,7 +15,8 @@ int main(int argc, char** argv) {
   cout << "reader size: " << sizeof(reader) << endl;
 
   while (true) {
-    Msg* msg = reader.read();
+    Msg* msg = reader.readLast();
+    // Msg* msg = reader.read();
     if (!msg) continue;
     auto now = rdtsc();
     auto latency = now - msg->tsc;
