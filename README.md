@@ -1,5 +1,5 @@
 ## SPMCQueue
-SPMCQueue is a single producer(writer) multiple consumer(reader) queue C++ template class, which can be easily used for inter-thread or inter-process communication.
+SPMCQueue is actually a single publisher(writer) multiple subscriber(reader) queue C++ template class, which can be easily used for inter-thread or inter-process communication.
 
 A key feature of this queue is that the writer won't wait if one of the readers is far behind, in which case we noramlly call a queue being "full". Actually there is no concept of being "full" in SPMC_Queue, the writer just keep writing without blocking or failure, it's not even aware of the existence of the readers. It's the reader's responsibility to not fall behind too much, if a reader is slower by more than queue size it'll start dropping messages. This is very simalar to udp multicasting in the network, where the sender doesn't care the receivers who subscribed the group and just send packages in its own speed, if a receiver is slow the NIC will drop packages when its incoming buffer is full. Likeyly, SPMC_Queue is "multicasting" within a host among threads or processes, in a pretty efficent way.
 
@@ -9,7 +9,7 @@ A SPMCQueue class is defined as `SPMCQueue<T, CNT>` where `T` is user msg type a
 SPMCQueue<int, 1024> q;
 ```
 
-The writer use a lambda callback function to write directly into the queue memory, making the write operation "zero-copy", and the write is always successful:
+The writer use a lambda callback function to write directly into the queue memory, making the write operation "zero-copy" and always successful:
 ```c++
 q.write([](int& msg){
   msg = 123;
@@ -21,7 +21,7 @@ For readers, initially one reader needs to get a `Reader` object from the queue:
   auto reader = q.getReader();
 ```
 
-The read operation is non-blocking, which means user needs to repetitively call the `read()` function to poll new messages from the writer. `read()` returns `T*` if it succeeds or `nullptr` if no new message:
+The read operation is non-blocking, which means user needs to repetitively call the `read()`/`readLast()` function to poll new messages from the writer. `read()`/`readLast()` returns `T*` if it succeeds or `nullptr` if no new message:
 ```c++
   int* msg = reader.read();
   if (msg) {
@@ -29,7 +29,7 @@ The read operation is non-blocking, which means user needs to repetitively call 
   }
 ```
 
-Note that by default the read operation is not zero-copy: it copys the msg to an internal local buffer to prevent data from being overwritten by the writer. If you're confident that you're handling msg very fast and the overwriting problem would never happen, then you can set the 3rd template parameter `ZERO_COPY_READ` to true in order to improve  performance.
+The read/readLast operation is also zero-copy: it simply returns the address of the next or the last object the writer has written, but the user should not save the reference for too long as it could be rewritten by the writer, it's better to copy the object for user himself if its content needs to be saved.
 
 ## Examples
 There are example codes in example dir for both ITC and IPC usage.
