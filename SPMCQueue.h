@@ -47,7 +47,7 @@ public:
       return &q->blks[last_idx % CNT].data;
     }
 
-    SPMCQueue<T, CNT>* q;
+    SPMCQueue<T, CNT>* q = nullptr;
     unsigned int idx;
   };
 
