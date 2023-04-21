@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include <atomic>
 
-template<class T, unsigned int CNT>
+template<class T, uint32_t CNT>
 class SPMCQueue
 {
 public:
@@ -32,48 +33,44 @@ public:
   {
     operator bool() const { return q; }
     T* read() {
-      auto& blk = q->blks[(idx + 1) % CNT];
-      asm volatile("" : "=m"(blk) : :);
-      unsigned int new_idx = blk.idx;
-      if ((int)new_idx - (int)idx <= 0) return nullptr;
-      idx = new_idx;
+      auto& blk = q->blks[next_idx % CNT];
+      uint32_t new_idx = ((std::atomic<uint32_t>*)&blk.idx)->load(std::memory_order_acquire);
+      if (int(new_idx - next_idx) < 0) return nullptr;
+      next_idx = new_idx + 1;
       return &blk.data;
     }
 
     T* readLast() {
-      unsigned int last_idx = *(volatile unsigned int*)&q->write_idx;
-      if ((int)last_idx - (int)idx <= 0) return nullptr;
-      idx = last_idx;
-      return &q->blks[last_idx % CNT].data;
+      T* ret = nullptr;
+      while (T* cur = read()) ret = cur;
+      return ret;
     }
 
     SPMCQueue<T, CNT>* q = nullptr;
-    unsigned int idx;
+    uint32_t next_idx;
   };
 
   Reader getReader() {
     Reader reader;
     reader.q = this;
-    reader.idx = write_idx;
+    reader.next_idx = write_idx + 1;
     return reader;
   }
 
   template<typename Writer>
   void write(Writer writer) {
-    auto& blk = blks[(write_idx + 1) % CNT];
+    auto& blk = blks[++write_idx % CNT];
     writer(blk.data);
-    asm volatile("" : : "m"(blk) :);
-    blk.idx = ++write_idx;
-    asm volatile("" : : "m"(write_idx), "m"(blk) :);
+    ((std::atomic<uint32_t>*)&blk.idx)->store(write_idx, std::memory_order_release);
   }
 
 private:
   friend class Reader;
   struct alignas(64) Block
   {
-    unsigned int idx = 0;
+    uint32_t idx = 0;
     T data;
   } blks[CNT];
 
-  alignas(128) unsigned int write_idx = 0;
+  alignas(128) uint32_t write_idx = 0;
 };
